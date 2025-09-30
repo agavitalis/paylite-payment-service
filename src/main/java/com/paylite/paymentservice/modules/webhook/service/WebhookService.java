@@ -1,38 +1,40 @@
 package com.paylite.paymentservice.modules.webhook.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.paylite.paymentservice.common.exceptions.PayliteException;
+
 import com.paylite.paymentservice.common.utilities.HmacUtility;
+import com.paylite.paymentservice.common.utilities.IdGenerator;
 import com.paylite.paymentservice.modules.payment.enums.PaymentStatus;
 import com.paylite.paymentservice.modules.payment.service.PaymentService;
 import com.paylite.paymentservice.modules.webhook.dto.WebhookRequest;
 import com.paylite.paymentservice.modules.webhook.dto.WebhookResponse;
 import com.paylite.paymentservice.modules.webhook.entity.WebhookEvent;
 import com.paylite.paymentservice.modules.webhook.repository.WebhookEventRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
 import java.time.LocalDateTime;
-import com.paylite.paymentservice.common.utilities.IdGenerator;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class WebhookService {
-    private final WebhookEventRepository webhookEventRepository;
-    private final PaymentService paymentService;
-    private final ObjectMapper objectMapper;
-    private final IdGenerator idGenerator;
+public class WebhookService implements IWebhookService{
 
     @Value("${app.webhook.secret:default-secret}")
     private String webhookSecret;
 
+    private final WebhookEventRepository webhookEventRepository;
+    private final PaymentService paymentService;
+    private final ObjectMapper objectMapper;
+    private final IdGenerator idGenerator;
     private final HmacUtility hmacUtility;
-
-    public WebhookService(HmacUtility hmacUtility) {
-        this.hmacUtility = hmacUtility;
-    }
 
     public boolean verifySignature(String signature, String payload) {
         boolean isValid = hmacUtility.verifyHmacSignature(signature, payload, webhookSecret);
@@ -43,8 +45,23 @@ public class WebhookService {
     }
 
     @Transactional
-    public WebhookResponse processWebhook(WebhookRequest request, String signature)
-            throws JsonProcessingException {
+    public WebhookResponse processWebhook(WebhookRequest request, String signature, HttpServletRequest rawRequest) {
+
+        log.info("Processing webhook for payment: {}", request.getPaymentId());
+
+        // Verify HMAC signature
+        String requestBody;
+        try {
+            requestBody = extractRequestBody(rawRequest);
+        } catch (IOException e) {
+            log.error("Failed to read webhook request body for payment: {}", request.getPaymentId(), e);
+            throw PayliteException.badRequest("Failed to read request body");
+        }
+
+        if (!verifySignature(signature, requestBody)) {
+            log.warn("Invalid webhook signature for payment: {}", request.getPaymentId());
+            throw PayliteException.unauthorized("Invalid webhook signature");
+        }
 
         String eventExternalId = idGenerator.generateEventId(request.getPaymentId(), request.getEvent());
 
@@ -61,24 +78,43 @@ public class WebhookService {
         paymentService.updatePaymentStatus(request.getPaymentId(), newStatus);
 
         // Record webhook event
-        WebhookEvent webhookEvent = new WebhookEvent();
-        webhookEvent.setEventExternalId(eventExternalId);
-        webhookEvent.setPaymentId(request.getPaymentId());
-        webhookEvent.setEventType(request.getEvent());
-        webhookEvent.setRawPayload(objectMapper.writeValueAsString(request));
-        webhookEvent.setProcessedAt(LocalDateTime.now());
+        try {
+            WebhookEvent webhookEvent = new WebhookEvent();
+            webhookEvent.setEventExternalId(eventExternalId);
+            webhookEvent.setPaymentId(request.getPaymentId());
+            webhookEvent.setEventType(request.getEvent());
+            webhookEvent.setRawPayload(objectMapper.writeValueAsString(request));
+            webhookEvent.setProcessedAt(LocalDateTime.now());
 
-        webhookEventRepository.save(webhookEvent);
-        log.info("Processed webhook for payment {} with event {}", request.getPaymentId(), request.getEvent());
+            webhookEventRepository.save(webhookEvent);
+            log.info("Successfully processed webhook for payment {} with event {}", request.getPaymentId(), request.getEvent());
 
-        return new WebhookResponse("SUCCESS", "Webhook processed successfully");
+            return new WebhookResponse("SUCCESS", "Webhook processed successfully");
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize webhook event for payment: {}", request.getPaymentId(), e);
+            throw PayliteException.internalError("Failed to process webhook");
+        }
+    }
+
+    private String extractRequestBody(HttpServletRequest request) throws IOException {
+        try (var reader = request.getReader()) {
+            StringBuilder stringBuilder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+            return stringBuilder.toString();
+        }
     }
 
     private PaymentStatus mapEventToStatus(String event) {
         return switch (event) {
             case "payment.succeeded" -> PaymentStatus.SUCCEEDED;
             case "payment.failed" -> PaymentStatus.FAILED;
-            default -> throw new IllegalArgumentException("Unknown event type: " + event);
+            default -> {
+                log.error("Unknown event type received: {}", event);
+                throw new IllegalArgumentException("Unknown event type: " + event);
+            }
         };
     }
 }

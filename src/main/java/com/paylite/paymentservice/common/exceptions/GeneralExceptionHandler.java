@@ -1,3 +1,4 @@
+// src/main/java/com/paylite/paymentservice/common/exceptions/GeneralExceptionHandler.java
 package com.paylite.paymentservice.common.exceptions;
 
 import org.springframework.http.HttpStatus;
@@ -6,30 +7,28 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@RestControllerAdvice
 public class GeneralExceptionHandler {
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(PayliteException.class)
-    public ResponseEntity<ErrorDetails> handleTweetsAPIException(PayliteException exception,
-                                                                 WebRequest webRequest) {
 
+    @ExceptionHandler(PayliteException.class)
+    public ResponseEntity<ErrorDetails> handlePayliteException(PayliteException exception,
+                                                               WebRequest webRequest) {
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 exception.getMessage(),
                 webRequest.getDescription(false),
                 null
         );
-
-        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorDetails, exception.getStatus());
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorDetails> handleValidationExceptions(
             MethodArgumentNotValidException ex, WebRequest webRequest) {
@@ -42,13 +41,13 @@ public class GeneralExceptionHandler {
 
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
-                "validation errors occurred",
+                "Validation errors occurred",
                 webRequest.getDescription(false),
                 errors
         );
         return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorDetails> handleAuthenticationException(AuthenticationException exception,
                                                                       WebRequest webRequest) {
@@ -58,24 +57,11 @@ public class GeneralExceptionHandler {
                 webRequest.getDescription(false),
                 null
         );
-
-        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ErrorDetails> handleConflictException(ConflictException exception,
-                                                                WebRequest webRequest) {
-        ErrorDetails errorDetails = new ErrorDetails(
-                LocalDateTime.now(),
-                exception.getMessage(),
-                webRequest.getDescription(false),
-                null
-        );
-        return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(PaymentNotFoundException.class)
-    public ResponseEntity<ErrorDetails> handlePaymentNotFoundException(PaymentNotFoundException exception,
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorDetails> handleIllegalArgumentException(IllegalArgumentException exception,
                                                                        WebRequest webRequest) {
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
@@ -83,6 +69,6 @@ public class GeneralExceptionHandler {
                 webRequest.getDescription(false),
                 null
         );
-        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 }

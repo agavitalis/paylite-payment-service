@@ -1,7 +1,7 @@
 package com.paylite.paymentservice.modules.payment.service;
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.paylite.paymentservice.common.exceptions.PayliteException;
 import com.paylite.paymentservice.common.utilities.IdGenerator;
 import com.paylite.paymentservice.modules.payment.dto.CreatePaymentRequest;
 import com.paylite.paymentservice.modules.payment.dto.CreatePaymentResponse;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PaymentService {
+public class PaymentService implements IPaymentService {
     private final PaymentRepository paymentRepository;
     private final IdempotencyService idempotencyService;
     private final IdGenerator idGenerator;
@@ -34,13 +34,16 @@ public class PaymentService {
         var cachedResponse = idempotencyService.getCachedResponse(idempotencyKey);
         if (cachedResponse.isPresent()) {
             log.info("Returning cached response for idempotency key: {}", idempotencyKey);
-            return objectMapper.readValue(cachedResponse.get(), CreatePaymentResponse.class);
+            return modelMapper.map(
+                    new com.fasterxml.jackson.databind.ObjectMapper().readValue(cachedResponse.get(), CreatePaymentResponse.class),
+                    CreatePaymentResponse.class
+            );
         }
 
         // Check for conflict (same key, different payload)
         if (idempotencyService.isDuplicateRequest(idempotencyKey, requestHash)) {
             log.warn("Idempotency key conflict for key: {}", idempotencyKey);
-            throw new ConflictException("Idempotency key conflict");
+            throw PayliteException.conflict("Idempotency key conflict");
         }
 
         // Create new payment
@@ -61,7 +64,7 @@ public class PaymentService {
         );
 
         // Cache the response for idempotency
-        String responseJson = objectMapper.writeValueAsString(response);
+        String responseJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(response);
         idempotencyService.storeIdempotencyKey(idempotencyKey, requestHash, responseJson);
 
         return response;
@@ -69,7 +72,7 @@ public class PaymentService {
 
     public PaymentResponse getPayment(String paymentId) {
         Payment payment = paymentRepository.findByPaymentId(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException("Payment not found: " + paymentId));
+                .orElseThrow(() -> PayliteException.notFound("Payment not found: " + paymentId));
 
         return modelMapper.map(payment, PaymentResponse.class);
     }
@@ -77,7 +80,7 @@ public class PaymentService {
     @Transactional
     public void updatePaymentStatus(String paymentId, PaymentStatus status) {
         Payment payment = paymentRepository.findByPaymentId(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException("Payment not found: " + paymentId));
+                .orElseThrow(() -> PayliteException.notFound("Payment not found: " + paymentId));
 
         payment.setStatus(status);
         paymentRepository.save(payment);

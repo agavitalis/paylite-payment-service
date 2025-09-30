@@ -16,7 +16,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class IdempotencyService {
+public class IdempotencyService implements  IIdempotencyService{
     private final IdempotencyKeyRepository idempotencyKeyRepository;
     private final ObjectMapper objectMapper;
     private final HashUtility hashUtility;

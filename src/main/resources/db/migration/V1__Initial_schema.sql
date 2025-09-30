@@ -1,6 +1,5 @@
--- src/main/resources/db/migration/V1__Initial_schema.sql
 CREATE TABLE payments (
-    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    id CHAR(36) PRIMARY KEY,
     payment_id VARCHAR(50) NOT NULL UNIQUE,
     amount DECIMAL(19,4) NOT NULL,
     currency VARCHAR(3) NOT NULL,
@@ -12,7 +11,7 @@ CREATE TABLE payments (
 );
 
 CREATE TABLE idempotency_keys (
-    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    id CHAR(36) PRIMARY KEY,
     `key` VARCHAR(255) NOT NULL UNIQUE,
     request_hash VARCHAR(255) NOT NULL,
     response_body TEXT,
@@ -20,7 +19,7 @@ CREATE TABLE idempotency_keys (
 );
 
 CREATE TABLE webhook_events (
-    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    id CHAR(36) PRIMARY KEY,
     event_external_id VARCHAR(255) UNIQUE,
     payment_id VARCHAR(50) NOT NULL,
     event_type VARCHAR(100) NOT NULL,
@@ -28,7 +27,6 @@ CREATE TABLE webhook_events (
     processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Add indexes for better performance
 CREATE INDEX idx_payments_payment_id ON payments(payment_id);
 CREATE INDEX idx_idempotency_keys_key ON idempotency_keys(`key`);
 CREATE INDEX idx_webhook_events_event_external_id ON webhook_events(event_external_id);

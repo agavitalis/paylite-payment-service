@@ -30,7 +30,7 @@ public class WebhookController {
             HttpServletRequest rawRequest) {
 
         try {
-            // Extract raw body FIRST
+            // Extract raw body
             String rawBody = extractRequestBody(rawRequest);
 
             // Verify HMAC signature BEFORE parsing

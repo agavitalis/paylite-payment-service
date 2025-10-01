@@ -26,25 +26,11 @@ import java.util.Map;
 public class PaymentController {
     private final PaymentService paymentService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @GetMapping("/debug/jackson")
-    public String testJackson() throws Exception {
-        ErrorDetails test = new ErrorDetails(
-                LocalDateTime.now(),
-                "test message",
-                "test details",
-                Map.of()
-        );
-
-        return objectMapper.writeValueAsString(test);
-    }
     @PostMapping
     public ResponseEntity<CreatePaymentResponse> createPayment(
             @RequestHeader("X-API-Key") String apiKey,
             @RequestHeader("Idempotency-Key") String idempotencyKey,
-            @RequestBody CreatePaymentRequest request)  {
+            @Valid @RequestBody CreatePaymentRequest request)  {
 
         log.info("Creating payment with idempotency key: {}", idempotencyKey);
         CreatePaymentResponse response = paymentService.createPayment(request, idempotencyKey);

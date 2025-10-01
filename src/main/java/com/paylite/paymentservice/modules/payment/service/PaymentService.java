@@ -1,6 +1,7 @@
 package com.paylite.paymentservice.modules.payment.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paylite.paymentservice.common.exceptions.PayliteException;
 import com.paylite.paymentservice.common.utilities.IdGenerator;
 import com.paylite.paymentservice.modules.payment.dto.CreatePaymentRequest;
@@ -29,25 +30,28 @@ public class PaymentService implements IPaymentService {
 
         String requestHash = idempotencyService.generateRequestHash(request);
 
-        // Check for cached response
-        var cachedResponse = idempotencyService.getCachedResponse(idempotencyKey);
-        if (cachedResponse.isPresent()) {
+        // Check if we've seen this exact request before (same key + same payload)
+        if (idempotencyService.hasSameRequest(idempotencyKey, requestHash)) {
             log.info("Returning cached response for idempotency key: {}", idempotencyKey);
-            try {
-                return modelMapper.map(
-                        new com.fasterxml.jackson.databind.ObjectMapper().readValue(cachedResponse.get(), CreatePaymentResponse.class),
-                        CreatePaymentResponse.class
-                );
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+            var cachedResponse = idempotencyService.getCachedResponse(idempotencyKey);
+            if (cachedResponse.isPresent()) {
+                try {
+                    return modelMapper.map(
+                            new ObjectMapper().readValue(cachedResponse.get(), CreatePaymentResponse.class),
+                            CreatePaymentResponse.class
+                    );
+                } catch (JsonProcessingException e) {
+                    throw PayliteException.internalError(e.getMessage());
+                }
             }
         }
 
         // Check for conflict (same key, different payload)
         if (idempotencyService.isDuplicateRequest(idempotencyKey, requestHash)) {
-            log.warn("Idempotency key conflict for key: {}", idempotencyKey);
-            throw PayliteException.conflict("Idempotency key conflict");
+            log.warn("Idempotency key conflict for key: {} - different payload detected", idempotencyKey);
+            throw PayliteException.conflict("Idempotency key conflict - request payload differs from original");
         }
+
 
         // Create new payment
         Payment payment = new Payment();
@@ -69,12 +73,11 @@ public class PaymentService implements IPaymentService {
         // Cache the response for idempotency
         String responseJson = null;
         try {
-            responseJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(response);
+            responseJson = new ObjectMapper().writeValueAsString(response);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw PayliteException.internalError(e.getMessage());
         }
         idempotencyService.storeIdempotencyKey(idempotencyKey, requestHash, responseJson);
-
         return response;
     }
 

@@ -85,7 +85,6 @@ public class WebhookService implements IWebhookService{
     }
 
 
-
     private PaymentStatus mapEventToStatus(String event) {
         return switch (event) {
             case "payment.succeeded" -> PaymentStatus.SUCCEEDED;

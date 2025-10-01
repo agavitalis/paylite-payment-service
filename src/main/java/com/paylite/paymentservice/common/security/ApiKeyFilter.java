@@ -27,7 +27,6 @@ public class ApiKeyFilter extends OncePerRequestFilter {
     public ApiKeyFilter(Map<String, String> apiKeys) {
         this.apiKeys = apiKeys;
         this.objectMapper = new ObjectMapper();
-        // Configure ObjectMapper for Java 8 time support
         this.objectMapper.registerModule(new JavaTimeModule());
         this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }

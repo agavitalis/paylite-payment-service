@@ -3,6 +3,7 @@ package com.paylite.paymentservice.modules.payment.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.paylite.paymentservice.common.exceptions.PayliteException;
 import com.paylite.paymentservice.common.utilities.HashUtility;
 import com.paylite.paymentservice.modules.payment.entity.IdempotencyKey;
 import com.paylite.paymentservice.modules.payment.repository.IdempotencyKeyRepository;
@@ -16,19 +17,18 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class IdempotencyService implements  IIdempotencyService{
+public class IdempotencyService implements IIdempotencyService {
     private final IdempotencyKeyRepository idempotencyKeyRepository;
     private final ObjectMapper objectMapper;
     private final HashUtility hashUtility;
 
     public String generateRequestHash(Object request) {
-        String requestJson = null;
         try {
-            requestJson = objectMapper.writeValueAsString(request);
+            String requestJson = objectMapper.writeValueAsString(request);
+            return hashUtility.generateSha256Hash(requestJson);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw PayliteException.internalError(e.getMessage());
         }
-        return hashUtility.generateSha256Hash(requestJson);
     }
 
     public Optional<String> getCachedResponse(String idempotencyKey) {
@@ -48,6 +48,12 @@ public class IdempotencyService implements  IIdempotencyService{
     }
 
     public boolean isDuplicateRequest(String idempotencyKey, String requestHash) {
+        // Check if the same key exists with a different request hash
+        return idempotencyKeyRepository.existsByKeyAndRequestHashNot(idempotencyKey, requestHash);
+    }
+
+    public boolean hasSameRequest(String idempotencyKey, String requestHash) {
+        // Check if the same key exists with the same request hash
         return idempotencyKeyRepository.existsByKeyAndRequestHash(idempotencyKey, requestHash);
     }
 }

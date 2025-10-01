@@ -12,9 +12,8 @@ public class IdGenerator {
     }
 
     public String generateEventId(String paymentId, String eventType) {
-        return String.format("%s_%s_%s",
+        return String.format("%s_%s",
                 paymentId,
-                eventType,
-                UUID.randomUUID().toString().substring(0, 8));
+                eventType);
     }
 }

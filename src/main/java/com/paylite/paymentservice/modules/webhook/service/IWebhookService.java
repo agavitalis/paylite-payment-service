@@ -21,8 +21,7 @@ public interface IWebhookService {
      *
      * @param request    The webhook request data
      * @param signature  The HMAC signature for verification
-     * @param rawRequest The raw HTTP request for body extraction
      * @return WebhookResponse indicating processing result
      */
-    WebhookResponse processWebhook(WebhookRequest request, String signature, HttpServletRequest rawRequest);
+    WebhookResponse processWebhook(WebhookRequest request, String signature);
 }

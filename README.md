@@ -49,10 +49,107 @@ PSP (Payment Service Provider) webhook integration. Built with production-ready 
 - Java 21 (for local development)
 - Maven 3.6+
 
-### Running with Docker Compose (Recommended)
+## Get started Notes:
 
-1. **Clone and setup:**
+- Create a copy of `application.properties` file by from `.application.properties.example` file.
+- Update `.application.properties` file with the necessary credentials
+- Application Endpoint: `http://localhost:8080`
+
+## Installation
+
+You can run the app in 3 ways:
+
+1. Without Docker
+2. Using Docker as an image
+3. Using Docker Compose (Recommended)
+
+### Running the app (Without Docker)
+
+Install the application dependencies by running this command:
+
 ```bash
-git clone <repository-url>
-cd paylite-payment-service
+mvn clean install -U 
+```
+
+After installing the dependencies and configuring `application.properties` file, start the applications using:
+
+```bash
+mvn spring-boot:run
+```
+
+### Running the app (Using Docker as an image)
+
+Build the application docker image using the command:
+
+```bash
+docker build --platform linux/amd64 -f Dockerfile -t vivvaa/chillr-user-service .
+```
+
+# Default → application.properties
+```bash
+docker run -p 8080:8080 --platform linux/amd64 vivvaa/chillr-user-service
+```
+
+# Staging → application.properties + application-local.properties
+```bash
+docker run -e SPRING_CONFIG_NAME=application-local -p 8080:8080 --platform linux/amd64 vivvaa/chillr-user-service
+```
+
+# Production → application.properties + application-production.properties
+```bash
+docker run -e SPRING_CONFIG_NAME=application-production -p 8080:8080 --platform linux/amd64 vivvaa/chillr-user-service
+```
+
+To push to dockerhub
+```bash
+docker push  vivvaa/chillr-user-service
+```
+
+
+Verify that your docker container is running using the command:
+
+```bash
+docker container ps
+```
+
+To delete a docker container use the command:
+
+```bash
+docker stop <container_id>
+```
+
+To delete a docker container use the command:
+
+```bash
+docker rm <container_id>
+```
+
+### Running the app (Using Docker Compose -- Recommended)
+
+Build the application docker image using the command:
+
+```bash
+docker compose build
+```
+
+Run the app using:
+
+```bash
+docker compose up 
+```
+
+You can also run in detached mood using:
+
+```bash
+docker compose up -d
+```
+
+To quit and delete use the command:
+
+```bash
+docker compose down
+```
+
+The access the app while running via docker use the URL: http://0.0.0.0:8070
+
 

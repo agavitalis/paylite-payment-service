@@ -45,23 +45,11 @@ public class WebhookService implements IWebhookService{
     }
 
     @Transactional
-    public WebhookResponse processWebhook(WebhookRequest request, String signature, HttpServletRequest rawRequest) {
+    public WebhookResponse processWebhook(WebhookRequest request, String signature) {
+        // Remove the rawRequest parameter and HMAC verification from service
+        // since it's now handled in the controller
 
         log.info("Processing webhook for payment: {}", request.getPaymentId());
-
-        // Verify HMAC signature
-        String requestBody;
-        try {
-            requestBody = extractRequestBody(rawRequest);
-        } catch (IOException e) {
-            log.error("Failed to read webhook request body for payment: {}", request.getPaymentId(), e);
-            throw PayliteException.badRequest("Failed to read request body");
-        }
-
-        if (!verifySignature(signature, requestBody)) {
-            log.warn("Invalid webhook signature for payment: {}", request.getPaymentId());
-            throw PayliteException.unauthorized("Invalid webhook signature");
-        }
 
         String eventExternalId = idGenerator.generateEventId(request.getPaymentId(), request.getEvent());
 
@@ -96,16 +84,7 @@ public class WebhookService implements IWebhookService{
         }
     }
 
-    private String extractRequestBody(HttpServletRequest request) throws IOException {
-        try (var reader = request.getReader()) {
-            StringBuilder stringBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                stringBuilder.append(line);
-            }
-            return stringBuilder.toString();
-        }
-    }
+
 
     private PaymentStatus mapEventToStatus(String event) {
         return switch (event) {

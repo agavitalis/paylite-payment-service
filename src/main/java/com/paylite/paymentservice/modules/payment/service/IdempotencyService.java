@@ -21,8 +21,13 @@ public class IdempotencyService implements  IIdempotencyService{
     private final ObjectMapper objectMapper;
     private final HashUtility hashUtility;
 
-    public String generateRequestHash(Object request) throws JsonProcessingException {
-        String requestJson = objectMapper.writeValueAsString(request);
+    public String generateRequestHash(Object request) {
+        String requestJson = null;
+        try {
+            requestJson = objectMapper.writeValueAsString(request);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         return hashUtility.generateSha256Hash(requestJson);
     }
 

@@ -12,9 +12,6 @@ services:
     volumes:
       - .:/app/paylite-payment-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/paylite_db?useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=paylite_user
-      - SPRING_DATASOURCE_PASSWORD=paylite_pass
       - SPRING_FLYWAY_ENABLED=true
     depends_on:
       - "mysql"
@@ -25,7 +22,11 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: admin124@
+      MYSQL_DATABASE: paylite_payment_service_db
+      MYSQL_USER: paylite_payment_service_user
+      MYSQL_PASSWORD: user123@
     networks:
       - backend
     command:

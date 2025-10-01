@@ -15,7 +15,7 @@ import java.io.Serializable;
 @Builder
 public class IdempotencyKey extends BaseEntityAudit implements Serializable {
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "`key`", unique = true, nullable = false)
     private String key;
 
     @Column(name = "request_hash", nullable = false)

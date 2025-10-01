@@ -25,8 +25,7 @@ public class PaymentService implements IPaymentService {
     private final ModelMapper modelMapper;
 
     @Transactional
-    public CreatePaymentResponse createPayment(CreatePaymentRequest request, String idempotencyKey)
-            throws JsonProcessingException {
+    public CreatePaymentResponse createPayment(CreatePaymentRequest request, String idempotencyKey) {
 
         String requestHash = idempotencyService.generateRequestHash(request);
 
@@ -34,10 +33,14 @@ public class PaymentService implements IPaymentService {
         var cachedResponse = idempotencyService.getCachedResponse(idempotencyKey);
         if (cachedResponse.isPresent()) {
             log.info("Returning cached response for idempotency key: {}", idempotencyKey);
-            return modelMapper.map(
-                    new com.fasterxml.jackson.databind.ObjectMapper().readValue(cachedResponse.get(), CreatePaymentResponse.class),
-                    CreatePaymentResponse.class
-            );
+            try {
+                return modelMapper.map(
+                        new com.fasterxml.jackson.databind.ObjectMapper().readValue(cachedResponse.get(), CreatePaymentResponse.class),
+                        CreatePaymentResponse.class
+                );
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         // Check for conflict (same key, different payload)
@@ -64,7 +67,12 @@ public class PaymentService implements IPaymentService {
         );
 
         // Cache the response for idempotency
-        String responseJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(response);
+        String responseJson = null;
+        try {
+            responseJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(response);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         idempotencyService.storeIdempotencyKey(idempotencyKey, requestHash, responseJson);
 
         return response;

@@ -86,14 +86,6 @@ A robust, scalable payment processing service built with Spring Boot that handle
 - Maven 3.6+
 - MySQL 8.0+
 
-### Configuration
-```properties
-# application.properties
-app.security.api-key=your-api-key-here
-app.webhook.secret=your-webhook-secret-here
-spring.datasource.url=jdbc:mysql://localhost:3306/paylite
-```
-
 ## Running the Application
 
 You can run the app in 3 ways:
@@ -160,7 +152,10 @@ To quit and delete use the command:
 docker compose down
 ```
 
-The access the app while running via docker use the URL: http://0.0.0.0:8070
+You can access the app while running via docker use the following URLs:
+- Swagger Docs http://localhost:8080/swagger-ui/index.html
+- OpenAPI Specs http://localhost:8080/v3/api-docs
+- Health Checks http://localhost:8080/actuator/health
 
 ## Pushing to dockerhub and basic docker debugging 
 Build the application docker image using the command if you have not done so:

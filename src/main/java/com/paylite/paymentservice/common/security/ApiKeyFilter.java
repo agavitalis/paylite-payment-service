@@ -60,7 +60,6 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } else {
             sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "Invalid API Key", request.getRequestURI());
-            return;
         }
     }
 
@@ -69,12 +68,12 @@ public class ApiKeyFilter extends OncePerRequestFilter {
         response.setStatus(status.value());
         response.setContentType("application/json");
 
-        ErrorDetails errorDetails = new ErrorDetails(
-                LocalDateTime.now(),
-                message,
-                path,
-                null
-        );
+
+        ErrorDetails errorDetails = new ErrorDetails();
+        errorDetails.setTimestamp(LocalDateTime.now());
+        errorDetails.setMessage(message);
+        errorDetails.setDetails(path);
+        errorDetails.setValidationErrors(Collections.emptyMap());
 
         response.getWriter().write(objectMapper.writeValueAsString(errorDetails));
     }

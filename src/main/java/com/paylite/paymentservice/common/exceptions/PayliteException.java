@@ -1,14 +1,16 @@
 package com.paylite.paymentservice.common.exceptions;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.http.HttpStatus;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class PayliteException extends RuntimeException {
-    private final HttpStatus status;
-    private final String message;
+    private  HttpStatus status;
+    private  String message;
 
     public PayliteException(HttpStatus status, String message) {
         super(message);

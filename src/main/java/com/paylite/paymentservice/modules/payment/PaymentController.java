@@ -1,9 +1,6 @@
 package com.paylite.paymentservice.modules.payment;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.paylite.paymentservice.common.exceptions.ErrorDetails;
 import com.paylite.paymentservice.modules.payment.dto.CreatePaymentRequest;
 import com.paylite.paymentservice.modules.payment.dto.CreatePaymentResponse;
 import com.paylite.paymentservice.modules.payment.dto.PaymentResponse;
@@ -11,13 +8,9 @@ import com.paylite.paymentservice.modules.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.Map;
 
 @Slf4j
 @RestController

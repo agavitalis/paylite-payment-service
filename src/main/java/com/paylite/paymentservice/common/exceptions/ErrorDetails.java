@@ -13,7 +13,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ErrorDetails {
-    private LocalDateTime timeStamp;
+    private LocalDateTime timestamp;
     private String message;
     private String details;
     private Map<String, String> validationErrors;

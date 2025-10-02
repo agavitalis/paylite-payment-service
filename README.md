@@ -192,6 +192,8 @@ To delete a docker container use the command:
 docker rm <container_id>
 ```
 ## Running the Application Unit Tests
+NB: Ensure you configure the configs variables in the application.properties file correctly.
+Pay close attention to the database connection URI and ensure this is pointed correctly.
 
 ```bash
 

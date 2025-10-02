@@ -110,7 +110,7 @@ Install the application dependencies by running this command:
 mvn clean install -U 
 ```
 
-After installing the dependencies and configuring `application.properties` file, start the applications using:
+After installing the dependencies, ensure you configure the `application.properties` file, start the applications using:
 
 ```bash
 mvn spring-boot:run
@@ -124,19 +124,14 @@ Build the application docker image using the command:
 docker build --platform linux/amd64 -f Dockerfile -t vivvaa/paylite-payment-service .
 ```
 
-### Default → application.properties
+### Default(Using Docker Compose Configs) → application.properties
 ```bash
 docker run -p 8080:8080 --platform linux/amd64 vivvaa/paylite-payment-service
 ```
 
-### Staging → application.properties + application-local.properties
+### Staging(Development) → application.properties + application-local.properties
 ```bash
 docker run -e SPRING_CONFIG_NAME=application-local -p 8080:8080 --platform linux/amd64 vivvaa/paylite-payment-service
-```
-
-### Production → application.properties + application-production.properties
-```bash
-docker run -e SPRING_CONFIG_NAME=application-production -p 8080:8080 --platform linux/amd64 vivvaa/paylite-payment-service
 ```
 
 ### Running the app (Using Docker Compose -- Recommended)
@@ -167,7 +162,7 @@ docker compose down
 
 The access the app while running via docker use the URL: http://0.0.0.0:8070
 
-## Pushing to dockerhub and basic debugging 
+## Pushing to dockerhub and basic docker debugging 
 Build the application docker image using the command if you have not done so:
 
 ```bash
@@ -182,6 +177,12 @@ Verify that your docker container is running using the command:
 
 ```bash
 docker container ps
+```
+
+To view docker container logs use the command:
+
+```bash
+docker logs <container_id>
 ```
 
 To delete a docker container use the command:

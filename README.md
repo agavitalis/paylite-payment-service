@@ -1,61 +1,100 @@
-# <p align="center">PAYLITE PAYMENT SERVICE API</p>
+# Paylite Payment Service
 
-## Description
-
-PayLite is a robust, Dockerized Spring Boot payments microservice that provides idempotent payment processing with 
-PSP (Payment Service Provider) webhook integration. Built with production-ready features including idempotency, security, and observability.
+A robust, scalable payment processing service built with Spring Boot that handles payment processing, webhook notifications, and idempotent operations.
 
 ## Features
 
-- ✅ **Idempotent Payment Processing** - Prevent duplicate payments with idempotency keys
-- ✅ **PSP Webhook Integration** - Secure webhook processing with HMAC verification
-- ✅ **API Key Authentication** - Secure access to payment endpoints
-- ✅ **MySQL Persistence** - Reliable data storage with Flyway migrations
-- ✅ **Dockerized** - Complete containerized setup with Docker Compose
-- ✅ **Comprehensive Testing** - Unit and integration tests
-- ✅ **Structured Logging** - Correlation IDs and key event tracking
-- ✅ **Health Monitoring** - Spring Boot Actuator endpoints
+### 🏫 Payment Processing
+- **Create Payments**: Process new payment requests with proper validation
+- **Idempotent Operations**: Prevent duplicate payments using idempotency keys
+- **Multiple Currencies**: Support for various currency types
+- **Payment Status Tracking**: Real-time payment status updates (PENDING, SUCCEEDED, FAILED)
 
-## Technology Stack
+### 🔔 Webhook System
+- **PSP Webhooks**: Receive and process payment status updates from Payment Service Providers
+- **HMAC Signature Verification**: Secure webhook validation using HMAC-SHA256
+- **Idempotent Webhook Processing**: Safely handle duplicate webhook deliveries
+- **Event Auditing**: Complete audit trail of all webhook events
 
-- **Java 21** with **Spring Boot 3.5.6**
-- **MySQL 8.0** - Primary database
-- **Flyway** - Database migrations
-- **Docker & Docker Compose** - Containerization
-- **Maven** - Dependency management
-- **ModelMapper** - Object mapping
-- **JUnit 5 & Testcontainers** - Testing
+### 🔒 Security & Authentication
+- **API Key Authentication**: Secure API access using X-API-Key headers
+- **HMAC Webhook Security**: Verified webhook signatures for PSP callbacks
+- **Input Validation**: Comprehensive request validation using Jakarta Bean Validation
+
+### 💾 Data Persistence
+- **Payment Records**: Complete payment transaction history
+- **Idempotency Keys**: Track and prevent duplicate requests
+- **Webhook Events**: Audit trail of all webhook processing
+- **Unique Constraints**: Prevent duplicate processing
+
+## Architecture
+
+### Core Components
+
+#### Domain Entities:
+- **Payment**: Core payment transaction entity with status tracking
+- **IdempotencyKey**: Ensures idempotent operations using request hashing
+- **WebhookEvent**: Tracks webhook processing and prevents duplicates
+
+#### Service Layer:
+- **PaymentService**: Handles payment creation, retrieval, and status updates
+- **IdempotencyService**: Manages idempotency key validation and caching
+- **WebhookService**: Processes PSP webhooks with signature verification
+
+#### Security:
+- **ApiKeyFilter**: JWT-style API key authentication for protected endpoints
+- **HMAC Verification**: Cryptographic signature validation for webhooks
+
+### Key Design Patterns
+
+#### Idempotency Pattern:
+```java
+// Same key + same payload = return cached response
+// Same key + different payload = 409 Conflict
+// New key = process normally
+```
+
+#### Webhook Security:
+```java
+// HMAC-SHA256 verification of raw request body
+// Idempotent processing using event external IDs
+// Complete audit trail of all webhook events
+```
 
 ## API Endpoints
 
-### Payment Endpoints (Require API Key)
+### Payment Operations
+| Method | Endpoint | Description | Headers |
+|--------|----------|-------------|---------|
+| `POST` | `/api/v1/payments` | Create new payment | `Idempotency-Key: <key>` |
+| `GET` | `/api/v1/payments/{id}` | Get payment details | `X-API-Key: <key>` |
 
-| Method | Endpoint | Headers | Description |
-|--------|----------|---------|-------------|
-| `POST` | `/api/v1/payments` | `X-API-Key`, `Idempotency-Key` | Create payment intent |
-| `GET` | `/api/v1/payments/{paymentId}` | `X-API-Key` | Get payment status |
+### Webhook Operations
+| Method | Endpoint | Description | Headers |
+|--------|----------|-------------|---------|
+| `POST` | `/api/v1/webhooks/psp` | PSP webhook callback | `X-PSP-Signature: <hmac>` |
 
-### Webhook Endpoint
-
-| Method | Endpoint | Headers | Description |
-|--------|----------|---------|-------------|
-| `POST` | `/api/v1/webhooks/psp` | `X-PSP-Signature` | Process PSP webhook callbacks |
+### Public Endpoints
+- `GET /actuator/health` - Health check
+- `GET /swagger-ui/**` - API documentation
+- `GET /v3/api-docs/**` - OpenAPI specification
 
 ## Quick Start
 
 ### Prerequisites
-
-- Docker & Docker Compose
-- Java 21 (for local development)
+- Java 17+
 - Maven 3.6+
+- MySQL 8.0+
 
-## Get started Notes:
+### Configuration
+```properties
+# application.properties
+app.security.api-key=your-api-key-here
+app.webhook.secret=your-webhook-secret-here
+spring.datasource.url=jdbc:mysql://localhost:3306/paylite
+```
 
-- Create a copy of `application.properties` file by from `.application.properties.example` file.
-- Update `.application.properties` file with the necessary credentials
-- Application Endpoint: `http://localhost:8080`
-
-## Installation
+## Running the Application
 
 You can run the app in 3 ways:
 
@@ -82,46 +121,22 @@ mvn spring-boot:run
 Build the application docker image using the command:
 
 ```bash
-docker build --platform linux/amd64 -f Dockerfile -t vivvaa/chillr-user-service .
+docker build --platform linux/amd64 -f Dockerfile -t vivvaa/paylite-payment-service .
 ```
 
-# Default → application.properties
+### Default → application.properties
 ```bash
-docker run -p 8080:8080 --platform linux/amd64 vivvaa/chillr-user-service
+docker run -p 8080:8080 --platform linux/amd64 vivvaa/paylite-payment-service
 ```
 
-# Staging → application.properties + application-local.properties
+### Staging → application.properties + application-local.properties
 ```bash
-docker run -e SPRING_CONFIG_NAME=application-local -p 8080:8080 --platform linux/amd64 vivvaa/chillr-user-service
+docker run -e SPRING_CONFIG_NAME=application-local -p 8080:8080 --platform linux/amd64 vivvaa/paylite-payment-service
 ```
 
-# Production → application.properties + application-production.properties
+### Production → application.properties + application-production.properties
 ```bash
-docker run -e SPRING_CONFIG_NAME=application-production -p 8080:8080 --platform linux/amd64 vivvaa/chillr-user-service
-```
-
-To push to dockerhub
-```bash
-docker push  vivvaa/chillr-user-service
-```
-
-
-Verify that your docker container is running using the command:
-
-```bash
-docker container ps
-```
-
-To delete a docker container use the command:
-
-```bash
-docker stop <container_id>
-```
-
-To delete a docker container use the command:
-
-```bash
-docker rm <container_id>
+docker run -e SPRING_CONFIG_NAME=application-production -p 8080:8080 --platform linux/amd64 vivvaa/paylite-payment-service
 ```
 
 ### Running the app (Using Docker Compose -- Recommended)
@@ -152,4 +167,158 @@ docker compose down
 
 The access the app while running via docker use the URL: http://0.0.0.0:8070
 
+## Pushing to dockerhub and basic debugging 
+Build the application docker image using the command if you have not done so:
+
+```bash
+docker build --platform linux/amd64 -f Dockerfile -t vivvaa/paylite-payment-service .
+```
+Push to dockerhub using the command below(replace `vivvaa` with your dockerhub username)
+```bash
+docker push  vivvaa/paylite-payment-service
+```
+
+Verify that your docker container is running using the command:
+
+```bash
+docker container ps
+```
+
+To delete a docker container use the command:
+
+```bash
+docker stop <container_id>
+```
+
+To delete a docker container use the command:
+
+```bash
+docker rm <container_id>
+```
+## Running the Application Unit Tests
+
+```bash
+
+# Run tests
+./mvnw test
+
+# Run tests and generate the report:
+mvn clean test
+
+# Generate HTML report:
+mvn surefire-report:report
+```
+Generated test output is in target/site/surefire-report.html.
+
+## API Usage Examples
+
+### Create Payment
+```bash
+curl -X POST http://localhost:8080/api/v1/payments \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: unique-request-key-123" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "amount": 100.00,
+    "currency": "USD",
+    "customerEmail": "customer@example.com",
+    "reference": "order-123"
+  }'
+```
+
+### PSP Webhook
+```bash
+curl -X POST http://localhost:8080/api/v1/webhooks/psp \
+  -H "Content-Type: application/json" \
+  -H "X-PSP-Signature: <hmac-signature>" \
+  -d '{
+    "paymentId": "pl_12345",
+    "event": "payment.succeeded"
+  }'
+```
+
+
+## Security
+
+### API Key Authentication
+- All payment endpoints require `X-API-Key` header
+- API keys are configured in application properties
+- Invalid or missing keys return 401 Unauthorized
+
+### Webhook Security
+- PSP webhooks require `X-PSP-Signature` header
+- HMAC-SHA256 verification using shared secret
+- Invalid signatures return 401 Unauthorized
+
+## Database Schema
+
+### Key Tables
+- `payments` - Payment transactions and status
+- `idempotency_keys` - Idempotency key tracking
+- `webhook_events` - Webhook processing audit
+
+### Unique Constraints
+- `idempotency_keys.key` - Prevent duplicate keys
+- `webhook_events.event_external_id` - Prevent duplicate webhooks
+
+## Monitoring & Health
+
+### Health Checks
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+### API Documentation
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI Spec: `http://localhost:8080/v3/api-docs`
+
+## Error Handling
+
+### Common HTTP Status Codes
+- `200 OK` - Success
+- `400 Bad Request` - Invalid input
+- `401 Unauthorized` - Invalid API key or webhook signature
+- `404 Not Found` - Resource not found
+- `409 Conflict` - Idempotency key conflict
+- `500 Internal Server Error` - Server error
+
+## Development
+
+### Project Structure
+```
+src/
+├── main/
+│   ├── java/com/paylite/paymentservice/
+│   │   ├── modules/
+│   │   │   ├── payment/     # Payment processing
+│   │   │   └── webhook/     # Webhook handling
+│   │   ├── common/          # Shared utilities
+│   │   └── config/          # Configuration
+│   └── resources/           # Application properties
+└── test/                   # Comprehensive test suite
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
+
+## Support
+
+For issues and questions:
+- Create an issue in the repository
+- Email: agavitalisogbonna@gmail.com
+
+## License
+
+This project is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/).
+You may **use, share, and adapt** this software for **non-commercial purposes** only. For commercial use, please contact the author for permission.
+
+---
+
+**Author**: [Ogbonna Vitalis](mailto:agavitalisogbonna@gmail.com)  
+**Version**: 1.0.0
 

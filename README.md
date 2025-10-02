@@ -157,7 +157,7 @@ You can access the app while running via docker use the following URLs:
 - OpenAPI Specs http://localhost:8080/v3/api-docs
 - Health Checks http://localhost:8080/actuator/health
 
-## Pushing to dockerhub and basic docker debugging 
+## Pushing to Dockerhub and basic Docker debugging 
 Build the application docker image using the command if you have not done so:
 
 ```bash
@@ -210,29 +210,34 @@ Generated test output is in target/site/surefire-report.html.
 
 ### Create Payment
 ```bash
-curl -X POST http://localhost:8080/api/v1/payments \
-  -H "Content-Type: application/json" \
-  -H "Idempotency-Key: unique-request-key-123" \
-  -H "X-API-Key: your-api-key" \
-  -d '{
-    "amount": 100.00,
-    "currency": "USD",
-    "customerEmail": "customer@example.com",
-    "reference": "order-123"
-  }'
+curl --location 'http://localhost:8080/api/v1/payments' \
+--header 'X-API-Key: client-api-key' \
+--header 'Idempotency-Key: 28fb3584-7bf9-4333-9742-864288125815' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data-raw '{
+  "amount": 5000,
+  "currency": "NGN",
+  "customerEmail": "agavitalisogbonna@gmail.com",
+  "reference": "28fb3584-7bf9-4333-9742-864288125815"
+}'
+```
+
+### Get Payment
+```bash
+curl --location 'http://localhost:8080/api/v1/payments/pl_c81c4ce4' \
+--header 'X-API-Key: client-api-key' \
+--header 'Accept: */*'
 ```
 
 ### PSP Webhook
 ```bash
-curl -X POST http://localhost:8080/api/v1/webhooks/psp \
-  -H "Content-Type: application/json" \
-  -H "X-PSP-Signature: <hmac-signature>" \
-  -d '{
-    "paymentId": "pl_12345",
-    "event": "payment.succeeded"
-  }'
+curl --location 'http://localhost:8080/api/v1/webhooks/psp' \
+--header 'X-PSP-Signature: ZEDtOsY4ivPjVJ/qMbF8+CTNCvAaKjXatUz8LskXTNA=' \
+--header 'Accept: */*' \
+--header 'Content-Type: application/json' \
+--data '{"paymentId":"pl_c81c4ce4","event":"payment.succeeded"}'
 ```
-
 
 ## Security
 

@@ -12,9 +12,9 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Chillr User Service")
+                        .title("Paylite Payment Service")
                         .version("1.0.0")
-                        .description("Chillr User Service")
+                        .description("Paylite Payment Service")
                 );
     }
 }

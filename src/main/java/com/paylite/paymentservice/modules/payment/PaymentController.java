@@ -5,6 +5,7 @@ import com.paylite.paymentservice.modules.payment.dto.CreatePaymentRequest;
 import com.paylite.paymentservice.modules.payment.dto.CreatePaymentResponse;
 import com.paylite.paymentservice.modules.payment.dto.PaymentResponse;
 import com.paylite.paymentservice.modules.payment.service.PaymentService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/payments")
+@Tag(name = "Payments", description = "Paylite Payment APIs")
 @RequiredArgsConstructor
 public class PaymentController {
     private final PaymentService paymentService;

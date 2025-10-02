@@ -11,6 +11,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -79,7 +80,7 @@ public class GeneralExceptionHandler {
                 LocalDateTime.now(),
                 "Endpoint not found: " + ex.getRequestURL(),
                 webRequest.getDescription(false),
-                null
+                Collections.emptyMap()
         );
         return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
     }

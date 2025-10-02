@@ -5,6 +5,7 @@ import com.paylite.paymentservice.common.exceptions.PayliteException;
 import com.paylite.paymentservice.modules.webhook.dto.WebhookRequest;
 import com.paylite.paymentservice.modules.webhook.dto.WebhookResponse;
 import com.paylite.paymentservice.modules.webhook.service.WebhookService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import java.io.IOException;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/webhooks")
+@Tag(name = "Webhooks", description = "Paylite Webhook APIs")
 @RequiredArgsConstructor
 public class WebhookController {
     private final WebhookService webhookService;
